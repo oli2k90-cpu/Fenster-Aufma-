@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Profi Fenster Aufmaß</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0056b3">
+    <!-- jsPDF und jsPDF-AutoTable für professionellen PDF-Export -->
+    <script src="https://cloudflare.com"></script>
+    <script src="https://cloudflare.com"></script>
+    <style>
+        :root {
+            --primary: #0056b3;
+            --success: #28a745;
+            --danger: #dc3545;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #333333;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 10px; background-color: var(--bg); color: var(--text); -webkit-tap-highlight-color: transparent; }
+        .container { max-width: 600px; margin: auto; background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); box-sizing: border-box; }
+        h1, h2, h3 { text-align: center; color: var(--primary); margin-top: 10px; }
+        .logo-container { text-align: center; margin-bottom: 15px; }
+        .logo-img { max-height: 60px; max-width: 100%; object-fit: contain; }
+        .section-box { border: 1px solid #ddd; padding: 12px; border-radius: 8px; margin-bottom: 15px; background: #fafafa; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; background: #fff; }
+        textarea { resize: vertical; min-height: 60px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { width: 100%; padding: 14px; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; box-sizing: border-box; }
+        .btn-primary { background-color: var(--primary); }
+        .btn-success { background-color: var(--success); }
+        .btn-danger { background-color: var(--danger); }
+        .btn-secondary { background-color: #6c757d; }
+        .photo-area { margin-top: 5px; }
+        .img-preview { width: 100%; max-height: 150px; object-fit: cover; border-radius: 6px; margin-top: 5px; display: none; }
+        .item-list { margin-top: 20px; border-top: 2px solid var(--primary); padding-top: 15px; }
+        .window-item { background: #e9ecef; padding: 12px; margin-bottom: 12px; border-radius: 8px; position: relative; border-left: 5px solid var(--primary); }
+        .window-item strong { font-size: 16px; color: var(--primary); }
+        .window-item p { margin: 4px 0; font-size: 14px; }
+        .item-photo { width: 80px; height: 60px; object-fit: cover; border-radius: 4px; margin-top: 5px; display: block; }
+        .delete-btn { background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 6px; float: right; cursor: pointer; font-size: 14px; margin-top: -5px; }
+        .total-box { background: #e2f0d9; border: 1px solid #b4c6e7; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; text-align: center; margin-top: 15px; color: #385723; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="logo-container" id="logoView">
+        <!-- Logo wird per JS geladen -->
+    </div>
+
+    <h1>Profi Fenster Aufmaß</h1>
+
+    <!-- 1. Projektverwaltung -->
+    <div class="section-box">
+        <h3>Projektverwaltung</h3>
+        <div class="form-group">
+            <label for="projectSelect">Projekt wählen:</label>
+            <select id="projectSelect" onchange="switchProject()"></select>
+        </div>
+        <div class="grid-2">
+            <input type="text" id="newProjectName" placeholder="Neuer Kunde / Projekt">
+            <button class="btn-primary" onclick="createNewProject()" style="padding:10px; margin:0;">Neu</button>
+        </div>
+        <button class="btn-danger" onclick="deleteCurrentProject()" style="margin-top:10px; padding:8px; font-size:14px;">Aktuelles Projekt löschen</button>
+    </div>
+
+    <!-- 2. Globale Einstellungen -->
+    <div class="section-box">
+        <h3>Einstellungen</h3>
+        <div class="form-group">
+            <label for="officeEmail">Büro E-Mail Adresse:</label>
+            <input type="email" id="officeEmail" placeholder="buero@schreinerei.de" onchange="saveSettings()">
+        </div>
+        <div class="form-group">
+            <label for="basePrice">Basis-Quadratmeterpreis (€):</label>
+            <input type="number" id="basePrice" value="250" onchange="saveSettings()">
+        </div>
+        <div class="form-group">
+            <label for="logoUpload">Firmenlogo ändern:</label>
+            <input type="file" id="logoUpload" accept="image/*" onchange="uploadLogo(this)">
+        </div>
+    </div>
+
+    <!-- 3. Formular für Fensterpositionen -->
+    <div class="section-box">
+        <h3>Neue Position erfassen</h3>
+        
+        <div class="form-group">
+            <label for="room">Raum / Position:</label>
+            <input type="text" id="room" placeholder="z.B. Wohnzimmer links">
+        </div>
+        
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="width">Breite (mm):</label>
+                <input type="number" id="width" pattern="[0-9]*" inputmode="numeric" placeholder="1250">
+            </div>
+            <div class="form-group">
+                <label for="height">Höhe (mm):</label>
+                <input type="number" id="height" pattern="[0-9]*" inputmode="numeric" placeholder="1400">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="type">Fenstertyp:</label>
+            <select id="type" onchange="updateDirectionOptions()">
+                <option value="1-flügelig">1-flügelig (Dreh-Kipp)</option>
+                <option value="2-flügelig mit Stulp">2-flügelig mit Stulp</option>
+                <option value="2-flügelig mit Setzholz">2-flügelig mit Setzholz (Pfosten)</option>
+                <option value="Hebe-Schiebetür">Hebe-Schiebetür (HST)</option>
+                <option value="Festverglasung">Festverglasung</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="direction">Öffnung / Richtung:</label>
+            <select id="direction">
+                <!-- Wird dynamisch befüllt -->
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="material">Material:</label>
+            <select id="material">
+                <option value="Kunststoff">Kunststoff</option>
+                <option value="Kunststoff-Alu">Kunststoff-Alu (+25%)</option>
+                <option value="Holz">Holz (+40%)</option>
+                <option value="Holz-Alu">Holz-Alu (+60%)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="glass">Verglasung:</label>
+            <select id="glass">
+                <option value="3-fach Wärmeschutz">3-fach Wärmeschutz (Standard)</option>
+                <option value="2-fach Wärmeschutz">2-fach Wärmeschutz (-10%)</option>
+                <option value="Schall-/Sicherheitsglas">Schall- / Sicherheitsglas (+20%)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="rollladen">Rollladen:</label>
+            <select id="rollladen">
+                <option value="Ohne">Ohne Rollladen</option>
+                <option value="Aufsatzrollladen">Aufsatzrollladen</option>
+                <option value="Vorbaurollladen">Vorbaurollladen</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="notes">Sonderformen / Notizen:</label>
+            <textarea id="notes" placeholder="z.B. Rundbogen, Segmentbogen, RC2-Beschlag..."></textarea>
+        </div>
+
+        <div class="form-group photo-area">
+            <label>Foto hinzufügen:</label>
+            <button type="button" class="btn-secondary" onclick="document.getElementById('cameraInput').click()">📷 Foto aufnehmen</button>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="previewPhoto(this)">
+            <img id="photoPreview" class="img-preview" src="" alt="Vorschau">
+        </div>
+        
+        <button class="btn-success" onclick="addWindow()">Position hinzufügen</button>
+    </div>
+
+    <!-- 4. Erfasste Liste -->
+    <div class="item-list">
+        <h2>Erfasste Positionen</h2>
+        <div id="windowList"></div>
+        <div id="totalBox" class="total-box" style="display:none;"></div>
+    </div>
+
+    <!-- 5. Export Aktionen -->
+    <div style="margin-top: 20px;">
+        <button class="btn-primary" onclick="generatePDF()">📄 PDF-Protokoll erstellen</button>
+        <button class="btn-secondary" onclick="sendToOffice()">📧 An Büro senden</button>
+    </div>
+</div>
+
+<script>
+    // FEST INTEGRIERTES STANDARD-LOGO (Transparentes Standard-Icon als Platzhalter)
+    const DEFAULT_LOGO_BASE64 = "data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='200' height='60' viewBox='0 0 200 60'><rect width='200' height='60' fill='%230056b3' rx='5'/><text x='50%'' y='55%'' fill='white' font-family='Arial' font-size='16' font-weight='bold' text-anchor='middle'>MEIN FIRMENLOGO</text></svg>";
+
+    let appData = {
+        projects: { "Standard Projekt": [] },
+        currentProject: "Standard Projekt",
+        officeEmail: "",
+        basePrice: 250,
+        logo: DEFAULT_LOGO_BASE64
+    };
+
+    let currentPhotoBase64 = "";
+
